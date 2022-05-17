@@ -21,7 +21,7 @@ class _TypeHierarchy(object):
             return None
 
     def build_hierachy(self, elem):
-        """Builds the type hierarchy
+        """Builds the type hierarchy recursively
 
         Fills the type hierarchy. Multiple calls of this function
         on the same object lead to undefined state of the hierarchy
@@ -30,7 +30,7 @@ class _TypeHierarchy(object):
             elem: ElementTree Element
 
         Returns:
-            type of root element
+            final call returns the type of the root element
         """
         t = self.find_type(elem)
         if t:
@@ -38,7 +38,9 @@ class _TypeHierarchy(object):
         if not len(elem):
             # leaf node 
             test = {
-                "typename" : elem.tag
+                "typename" : elem.tag,
+                "attribute" : [k for k in elem.attrib.keys()],
+                "child_typenames" : []
             }
             self.type_hierarchy["types"].append(test)
             return test
@@ -47,9 +49,26 @@ class _TypeHierarchy(object):
             child_typenames = [] 
             for child in elem:
                 t = self.build_hierachy(child)
-                child_typenames.append(t["typename"])
+                formatted_tname = ":" + t["typename"]
+                child_typenames.append(formatted_tname)
+            ctns = list(child_typenames)
+            seq_dict = {}
+            for i, c in enumerate(ctns):
+                if (i + 1) == len(ctns):
+                    break
+                _, cbasetype = c.split(":")
+                _, nbasetype = ctns[i + 1].split(":")
+                if cbasetype == nbasetype:
+                    if not cbasetype in seq_dict:
+                        seq_dict.update({cbasetype : [i, i + 1] })
+                    else:
+                        seq_dict[cbasetype][1] = i + 1
+            for seq_type, index_range in seq_dict.items():
+                del child_typenames[index_range[0] : index_range[1] + 1]
+                child_typenames.insert(index_range[0], "list:{}".format(seq_type))
             test = {
                 "typename" : elem.tag,
+                "attribute" : [k for k in elem.attrib.keys()],
                 "child_typenames" : child_typenames
             }
             self.type_hierarchy["types"].append(test)

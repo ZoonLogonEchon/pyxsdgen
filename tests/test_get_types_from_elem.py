@@ -38,7 +38,7 @@ class TestTypeExtraction(unittest.TestCase):
         target_typenames = list(map(lambda ttype: ttype["typename"], self.sample_tree_0["types"]))
 
         types_dict = get_types_from_elem(tree)
-
+        print(types_dict)
         self.assertEqual(len(types_dict["types"]), len(target_typenames))
         for type_entry in types_dict["types"]:
             typename = type_entry["typename"]
