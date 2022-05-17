@@ -9,14 +9,24 @@ class TestTypeExtraction(unittest.TestCase):
     """
     sample_xml_0 ="""<?xml version="1.0"?>
         <settings>
-            <projectauthor name="Daimo Nia" />
+            <projectauthor name="Daimo Nia" homepage="127.0.0.1" />
             <projectpath base="path_base">rel path</projectpath>
             <config>
-                <attributeA> 123 </attributeA>
-                <attributeB> abc </attributeB>
+                <attribute name="a"> 123 </attribute>
+                <attribute name="b"> abc </attribute>
             </config>
         </settings>
         """
+    sample_tree_0 ={
+        "types" : [
+                {"typename":"attribute", "attributes": ["name"]},
+                {"typename":"config", "attributes": [], "child_typenames" : ["list:attribute"]},
+                {"typename":"projectauthor", "attributes": []},
+                {"typename":"projectpath", "attributes": []},
+                {"typename":"settings", "attributes": [], "child_typenames" : [":projectauthor", ":projectpath", ":config"]}
+            ],
+        "root_type" : "settings"
+    }
     def test_not_empty(self):
         tree = ET.fromstring(self.sample_xml_0)
         types_dict = get_types_from_elem(tree)
@@ -25,7 +35,7 @@ class TestTypeExtraction(unittest.TestCase):
 
     def test_get_types_from_elem(self):
         tree = ET.fromstring(self.sample_xml_0)
-        target_typenames = ["attributeA", "attributeB", "config", "settings", "projectauthor", "projectpath"]
+        target_typenames = list(map(lambda ttype: ttype["typename"], self.sample_tree_0["types"]))
 
         types_dict = get_types_from_elem(tree)
 
@@ -34,4 +44,9 @@ class TestTypeExtraction(unittest.TestCase):
             typename = type_entry["typename"]
             self.assertIn(typename, target_typenames)
         
+        for t in self.sample_tree_0["types"]:
+            if "settings" == t["typename"]:
+                self.assertEqual(len(t["attributes"]), 0)
+                self.assertEqual(len(t["child_typenames"]), 3)
+
         self.assertEqual(types_dict["root_type"], "settings")
