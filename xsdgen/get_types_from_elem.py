@@ -5,7 +5,36 @@ class _TypeHierarchy(object):
     def __init__(self):
         self.type_hierarchy = {"types" : []}
 
+    def find_type(self, elem):
+        """Searches for elem in the type hierarchy
+
+        Args:
+            elem: ElementTree Element
+
+        Returns:
+            type entry if found else None
+        """
+        for t in self.type_hierarchy["types"]:
+            if elem.tag in t["typename"]:
+                return t
+        else:
+            return None
+
     def build_hierachy(self, elem):
+        """Builds the type hierarchy
+
+        Fills the type hierarchy. Multiple calls of this function
+        on the same object lead to undefined state of the hierarchy
+
+        Args:
+            elem: ElementTree Element
+
+        Returns:
+            type of root element
+        """
+        t = self.find_type(elem)
+        if t:
+            return t
         if not len(elem):
             # leaf node 
             test = {
