@@ -38,15 +38,17 @@ class TestTypeExtraction(unittest.TestCase):
         target_typenames = list(map(lambda ttype: ttype["typename"], self.sample_tree_0["types"]))
 
         types_dict = get_types_from_elem(tree)
-        print(types_dict)
         self.assertEqual(len(types_dict["types"]), len(target_typenames))
         for type_entry in types_dict["types"]:
             typename = type_entry["typename"]
             self.assertIn(typename, target_typenames)
         
-        for t in self.sample_tree_0["types"]:
+        for t in types_dict["types"]:
             if "settings" == t["typename"]:
                 self.assertEqual(len(t["attributes"]), 0)
                 self.assertEqual(len(t["child_typenames"]), 3)
+            if "config" == t["typename"]:
+                self.assertEqual(len(t["child_typenames"]), 1)
+                self.assertTrue("list:" in t["child_typenames"][0])
 
         self.assertEqual(types_dict["root_type"], "settings")
