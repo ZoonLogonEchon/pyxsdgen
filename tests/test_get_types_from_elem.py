@@ -50,5 +50,7 @@ class TestTypeExtraction(unittest.TestCase):
             if "config" == t["typename"]:
                 self.assertEqual(len(t["child_typenames"]), 1)
                 self.assertTrue("list:" in t["child_typenames"][0])
+            if "attribute" == t["typename"]:
+                self.assertEqual(len(t["attributes"]), 1)
 
         self.assertEqual(types_dict["root_type"], "settings")
