@@ -1,6 +1,7 @@
 # Custom rules
 *.xml
 *.xsd
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
