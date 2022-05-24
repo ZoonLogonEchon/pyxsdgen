@@ -39,7 +39,7 @@ class _TypeHierarchy(object):
             # leaf node 
             test = {
                 "typename" : elem.tag,
-                "attribute" : [k for k in elem.attrib.keys()],
+                "attributes" : [k for k in elem.attrib.keys()],
                 "child_typenames" : []
             }
             self.type_hierarchy["types"].append(test)
@@ -68,7 +68,7 @@ class _TypeHierarchy(object):
                 child_typenames.insert(index_range[0], "list:{}".format(seq_type))
             test = {
                 "typename" : elem.tag,
-                "attribute" : [k for k in elem.attrib.keys()],
+                "attributes" : [k for k in elem.attrib.keys()],
                 "child_typenames" : child_typenames
             }
             self.type_hierarchy["types"].append(test)
