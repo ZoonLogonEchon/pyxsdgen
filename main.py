@@ -1,5 +1,6 @@
 import argparse
 import xml.etree.ElementTree as ET
+import xmlschema
 
 def main(args):
     tree = ET.parse(args.path_to_xml)
@@ -11,4 +12,6 @@ if __name__ == "__main__":
     parser.add_argument('path_to_xml', type=str,
                     help='path to the xml file')
     args = parser.parse_args()
-    main(args)
+    my_schema = xmlschema.XMLSchema('sample.xsd')
+    my_schema.validate("sample.xml")
+    #main(args)
