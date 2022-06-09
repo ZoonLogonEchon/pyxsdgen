@@ -1,3 +1,21 @@
+from enum import Enum
+from functools import reduce
+class _ContentType(Enum):
+    empty = 0
+    text = 1
+    types = 2
+    mixed = 3
+
+class ElemTypeInfo(object):
+    """Struct to store element type informations
+    """
+    def __init__(self, type_name, content_type=_ContentType.empty, attributes=[], child_type_names=[]):
+        self.type_name = type_name
+        self.content_type = content_type
+        self.attributes = attributes
+        self.child_type_names = child_type_names
+
+
 class _TypeHierarchy(object):
     """
     docstring
@@ -15,7 +33,7 @@ class _TypeHierarchy(object):
             type entry if found else None
         """
         for t in self.type_hierarchy["types"]:
-            if elem.tag in t["typename"]:
+            if elem.tag in t.type_name:
                 return t
         else:
             return None
@@ -36,12 +54,11 @@ class _TypeHierarchy(object):
         if t:
             return t
         if not len(elem):
-            # leaf node 
-            test = {
-                "typename" : elem.tag,
-                "attributes" : [k for k in elem.attrib.keys()],
-                "child_typenames" : []
-            }
+            # leaf node
+            content_type = _ContentType.empty
+            if not elem.text is None and elem.text.strip():
+                content_type = _ContentType.text
+            test = ElemTypeInfo(elem.tag, content_type, [k for k in elem.attrib.keys()])
             self.type_hierarchy["types"].append(test)
             return test
         else:
@@ -49,15 +66,15 @@ class _TypeHierarchy(object):
             child_typenames = [] 
             for child in elem:
                 t = self.build_hierachy(child)
-                formatted_tname = ":" + t["typename"]
+                formatted_tname = ("element", t.type_name)
                 child_typenames.append(formatted_tname)
             ctns = list(child_typenames)
             seq_dict = {}
             for i, c in enumerate(ctns):
                 if (i + 1) == len(ctns):
                     break
-                _, cbasetype = c.split(":")
-                _, nbasetype = ctns[i + 1].split(":")
+                _, cbasetype = c
+                _, nbasetype = ctns[i + 1]
                 if cbasetype == nbasetype:
                     if not cbasetype in seq_dict:
                         seq_dict.update({cbasetype : [i, i + 1] })
@@ -65,12 +82,12 @@ class _TypeHierarchy(object):
                         seq_dict[cbasetype][1] = i + 1
             for seq_type, index_range in seq_dict.items():
                 del child_typenames[index_range[0] : index_range[1] + 1]
-                child_typenames.insert(index_range[0], "list:{}".format(seq_type))
-            test = {
-                "typename" : elem.tag,
-                "attributes" : [k for k in elem.attrib.keys()],
-                "child_typenames" : child_typenames
-            }
+                child_typenames.insert(index_range[0], ("list", seq_type))
+            content_type = _ContentType.types
+            children_have_tail = any(map(lambda child: bool(child.tail.strip()), elem))
+            if (not elem.text is None and elem.text.strip()) or children_have_tail:
+                content_type = _ContentType.mixed
+            test = ElemTypeInfo(elem.tag, content_type, [k for k in elem.attrib.keys()], child_typenames)
             self.type_hierarchy["types"].append(test)
             return test
 

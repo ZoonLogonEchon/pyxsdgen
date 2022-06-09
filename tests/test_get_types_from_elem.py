@@ -2,6 +2,7 @@ import unittest
 import xml.etree.ElementTree as ET
 
 from xsdgen.get_types_from_elem import get_types_from_elem
+from xsdgen.get_types_from_elem import ElemTypeInfo, _ContentType
 
 class TestTypeExtraction(unittest.TestCase):
     """
@@ -19,11 +20,11 @@ class TestTypeExtraction(unittest.TestCase):
         """
     sample_tree_0 ={
         "types" : [
-                {"typename":"attribute", "attributes": ["name"]},
-                {"typename":"config", "attributes": [], "child_typenames" : ["list:attribute"]},
-                {"typename":"projectauthor", "attributes": []},
-                {"typename":"projectpath", "attributes": []},
-                {"typename":"settings", "attributes": [], "child_typenames" : [":projectauthor", ":projectpath", ":config"]}
+                ElemTypeInfo("projectauthor", _ContentType.empty, ["name", "homepage"]),
+                ElemTypeInfo("projectpath", _ContentType.text, ["base"]),
+                ElemTypeInfo("attribute", _ContentType.text, ["name"]),
+                ElemTypeInfo("config", _ContentType.types, [], [("list", "attribute")]),
+                ElemTypeInfo("settings", _ContentType.types, [], [("element", "projectauthor"), ("element", "projectpath"), ("element", "config")])
             ],
         "root_type" : "settings"
     }
@@ -35,22 +36,14 @@ class TestTypeExtraction(unittest.TestCase):
 
     def test_get_types_from_elem(self):
         tree = ET.fromstring(self.sample_xml_0)
-        target_typenames = list(map(lambda ttype: ttype["typename"], self.sample_tree_0["types"]))
 
         types_dict = get_types_from_elem(tree)
-        self.assertEqual(len(types_dict["types"]), len(target_typenames))
-        for type_entry in types_dict["types"]:
-            typename = type_entry["typename"]
-            self.assertIn(typename, target_typenames)
+        self.assertEqual(len(types_dict["types"]), len(self.sample_tree_0["types"]))
         
-        for t in types_dict["types"]:
-            if "settings" == t["typename"]:
-                self.assertEqual(len(t["attributes"]), 0)
-                self.assertEqual(len(t["child_typenames"]), 3)
-            if "config" == t["typename"]:
-                self.assertEqual(len(t["child_typenames"]), 1)
-                self.assertTrue("list:" in t["child_typenames"][0])
-            if "attribute" == t["typename"]:
-                self.assertEqual(len(t["attributes"]), 1)
+        for i in range(len(self.sample_tree_0["types"])):
+            self.assertEqual(types_dict["types"][i].content_type, self.sample_tree_0["types"][i].content_type)
+            self.assertEqual(types_dict["types"][i].attributes, self.sample_tree_0["types"][i].attributes)
+            self.assertEqual(types_dict["types"][i].child_type_names, self.sample_tree_0["types"][i].child_type_names)
+            self.assertEqual(types_dict["types"][i].type_name, self.sample_tree_0["types"][i].type_name)
 
-        self.assertEqual(types_dict["root_type"], "settings")
+        self.assertEqual(types_dict["root_type"], self.sample_tree_0["root_type"])
