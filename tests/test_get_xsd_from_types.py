@@ -1,7 +1,9 @@
 import unittest
 import xml.etree.ElementTree as ET
+import xmlschema
 
 from xsdgen.get_xsd_from_types import get_xsd_from_types
+from xsdgen.get_types_from_elem import ElemTypeInfo, _ContentType
 
 class TestXSDStrGeneration(unittest.TestCase):
     """
@@ -60,23 +62,33 @@ class TestXSDStrGeneration(unittest.TestCase):
         """
     sample_tree_0 ={
         "types" : [
-                {"typename":"attribute", "attributes": ["name"]},
-                {"typename":"config", "attributes": [], "child_typenames" : ["list:attribute"]},
-                {"typename":"projectauthor", "attributes": []},
-                {"typename":"projectpath", "attributes": []},
-                {"typename":"settings", "attributes": [], "child_typenames" : [":projectauthor", ":projectpath", ":config"]}
+                ElemTypeInfo("projectauthor", _ContentType.empty, ["name", "homepage"]),
+                ElemTypeInfo("projectpath", _ContentType.text, ["base"]),
+                ElemTypeInfo("attribute", _ContentType.text, ["name"]),
+                ElemTypeInfo("config", _ContentType.types, [], [("list", "attribute")]),
+                ElemTypeInfo("settings", _ContentType.types, [], [("element", "projectauthor"), ("element", "projectpath"), ("element", "config")])
             ],
         "root_type" : "settings"
     }
     def test_not_empty(self):
-        xsd_str = get_xsd_from_types(self.sample_xml_0)
+        xsd_str = get_xsd_from_types(self.sample_tree_0)
         self.assertNotEqual(len(xsd_str), 0)
 
     def test_get_xsd_from_types(self):
-        xsd_str = get_xsd_from_types(self.sample_xml_0)
-        pass
+        xsd_root = get_xsd_from_types(self.sample_tree_0)
+        trgt_root = ET.fromstring(self.sample_xsd_0)
+        def helper(test, target):
+            self.assertEqual(test.tag, target.tag)
+            self.assertEqual(test.attrib, target.attrib)
+            self.assertEqual(len(test), len(target))
+            for i in range(len(target)):
+                helper(test[i], target[i])
+        helper(xsd_root, trgt_root)
 
+    @unittest.skip
     def test_validate_sample_xml(self):
         tree = ET.fromstring(self.sample_xml_0)
-        xsd_str = get_xsd_from_types(self.sample_xml_0)
+        xsd_root = get_xsd_from_types(self.sample_xml_0)
+        schema = xmlschema.XMLSchema(xsd_root)
+        schema.validate(self.sample_xml_0)
         pass
