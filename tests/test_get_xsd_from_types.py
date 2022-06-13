@@ -85,10 +85,9 @@ class TestXSDStrGeneration(unittest.TestCase):
                 helper(test[i], target[i])
         helper(xsd_root, trgt_root)
 
-    @unittest.skip
     def test_validate_sample_xml(self):
         tree = ET.fromstring(self.sample_xml_0)
-        xsd_root = get_xsd_from_types(self.sample_xml_0)
-        schema = xmlschema.XMLSchema(xsd_root)
-        schema.validate(self.sample_xml_0)
-        pass
+        xsd_root = get_xsd_from_types(self.sample_tree_0)
+        schema = xmlschema.XMLSchema(ET.tostring(xsd_root))
+        res = schema.is_valid(self.sample_xml_0)
+        self.assertTrue(res)
